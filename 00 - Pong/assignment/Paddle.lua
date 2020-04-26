@@ -26,28 +26,35 @@ Paddle = Class{}
     have their own x, y, width, and height values, thus serving as containers
     for data. In this sense, they're very similar to structs in C.
 ]]
-function Paddle:init(x, y, width, height)
+function Paddle:init(x, y, width, height, velocity, is_ai)
     self.x = x
     self.y = y
     self.width = width
     self.height = height
     self.dy = 0
+    self.velocity = velocity
+    self.is_ai = is_ai
 end
 
 function Paddle:update(dt)
-    -- math.max here ensures that we're the greater of 0 or the player's
-    -- current calculated Y position when pressing up so that we don't
-    -- go into the negatives; the movement calculation is simply our
-    -- previously-defined paddle speed scaled by dt
-    if self.dy < 0 then
-        self.y = math.max(0, self.y + self.dy * dt)
-    -- similar to before, this time we use math.min to ensure we don't
-    -- go any farther than the bottom of the screen minus the paddle's
-    -- height (or else it will go partially below, since position is
-    -- based on its top left corner)
+    if self.is_ai then
+        if self.y > ball.y then
+            self.y = self.y - math.min(math.abs(self.y - ball.y), self.velocity * dt)
+        elseif self.y < ball.y then
+            self.y = self.y + math.min(math.abs(self.y - ball.y), self.velocity * dt)
+        end
     else
-        self.y = math.min(VIRTUAL_HEIGHT - self.height, self.y + self.dy * dt)
+        if love.keyboard.isDown('w') then
+            self.dy = -1
+        elseif love.keyboard.isDown('s') then
+            self.dy = 1
+        else
+            self.dy = 0
+        end
+        self.y = self.y + self.dy * self.velocity * dt
     end
+
+    self.y = math.max(0, math.min(VIRTUAL_HEIGHT - self.height, self.y))
 end
 
 --[[
